@@ -1,0 +1,620 @@
+---
+title: "Project"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    css: min.css
+    theme: null
+    highlight: textmate
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(prompt = FALSE)
+knitr::opts_chunk$set(error = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(fig.width = 8)
+knitr::opts_chunk$set(fig.height = 6)
+```
+
+```{r}
+dirt = "C:/Users/Documents/R/Project"
+setwd(dirt)
+#setwd(paste0(dirt, "/files/Nov_9"))
+list.packages = c("twitteR", "ROAuth", "RCurl", "stringr", "tm", "ggmap", "dplyr", "plyr", "wordcloud", "slam", "e1071", "ggplot2", "lattice", "rpart", "rpart.plot", "knitr", "caret", "e1071", "AUC", "robustbase", "cvTools", "adabag", "DT", "class", "gplots", "ROCR", "dplyr", "pROC", "randomForest", "rattle", "rattle", "NLP", "tm", "tau", "nnet", "klaR")
+
+list.packages = unique(list.packages)
+
+install.pack = list.packages %in% installed.packages()
+
+if(length(list.packages[!install.pack]) > 0) 
+  install.p = install.packages(list.packages[!install.pack])
+
+library = lapply(list.packages, require, character.only=TRUE)
+
+library('syuzhet')
+```
+
+```{r Trump&HillaryWords}
+twitter = read.table("twitter_data.txt")
+
+trump.words <- c("trump","don")
+hillary.words <- c("hillary","clinton")
+obama.words <- c("obama","barack", "potus")
+
+t <- filter(twitter,grepl("trump",text, ignore.case = TRUE))
+t1 <- filter(twitter,grepl("don",text, ignore.case = TRUE))
+t5 = rbind(t,t1)
+trump.data = unique(t5, by = "ID")
+
+h <- filter(twitter,grepl("hillary",text, ignore.case = TRUE))
+h1 <- filter(twitter,grepl("clinton",text, ignore.case = TRUE))
+h5 = rbind(h,h1)
+hilla.data = unique(h5, by = "ID")
+
+b <- filter(twitter,grepl("obama",text, ignore.case = TRUE))
+b1 <- filter(twitter,grepl("barack",text, ignore.case = TRUE))
+b2 <- filter(twitter,grepl("potus",text, ignore.case = TRUE))
+b5 = rbind(b,b1,b2)
+obama.data = unique(b5, by = "ID")
+```
+
+```{r Stopwords}
+#Define Stopwords
+stopwords <- read.csv("C:/Users/2PAC/Documents/R/Data_Mining/project_4/sotu/sotu/stopwords.txt", sep="", header=FALSE)
+names(stopwords) = c("Stop.Words")
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="amp"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="https"))
+
+#while exposing negative behavior, these are not good words for cloud
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="didn"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="dont"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="doesn"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="isn"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="wasn"))
+
+#obvious words don't support data
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="today"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="electionnight"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="electionday"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="president"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="election"))
+
+#more words that do not support conclusions
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="gonna"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="wanna"))
+
+#names (Keep Hillary and Trump, delete rest of name association)
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="donald"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="realdonaldtrump"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="don"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="hillaryclinton"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="trumps"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="clinton"))
+stopwords <- rbind(stopwords, data.frame("Stop.Words"="clintons"))
+```
+
+```{r trump1000}
+trumpSample_1000 <- read.table("trumpSample1000.txt")
+
+# Create corpus
+corpus=Corpus(VectorSource(trumpSample_1000$text))
+
+stopwordsT <- stopwords
+stopwordsT <- rbind(stopwordsT, data.frame("Stop.Words"="hillary"))
+
+corpus <- tm_map(corpus, removeWords, stopwordsT$Stop.Words)
+
+tdm = TermDocumentMatrix(corpus,
+    control = list(removePunctuation = TRUE,
+   stopwords = TRUE,
+   removeNumbers = TRUE, tolower = TRUE))
+
+che = rollup(tdm,2,na.rm=TRUE,FUN = sum)
+che = as.matrix(che)
+
+dm = data.frame(che)
+
+#Term Document Matrix with Stop Words Removed
+d <- subset(dm, !(rownames(dm) %in% stopwordsT$Stop.Words))
+colnames(d) <- c("freq")
+```
+
+```{r clinton1000}
+clintonSample_1000 <- read.table("clintonSample1000.txt")
+
+corpus2=Corpus(VectorSource(clintonSample_1000$text))
+
+stopwordsH <- stopwords
+stopwordsH <- rbind(stopwordsH, data.frame("Stop.Words"="trump"))
+
+corpus2 <- tm_map(corpus2, removeWords, stopwordsH$Stop.Words)
+
+tdm2 = TermDocumentMatrix(corpus2,
+   control = list(removePunctuation = TRUE,
+   stopwords = TRUE,
+   removeNumbers = TRUE, tolower = TRUE))
+
+che2 = rollup(tdm2,2,na.rm=TRUE,FUN = sum)
+che2 = as.matrix(che2)
+
+dm2 = data.frame(che2)
+
+#Term Document Matrix with Stop Words Removed
+d2 <- subset(dm2, !(rownames(dm2) %in% stopwordsH$Stop.Words))
+colnames(d2) <- c("freq")
+```
+
+##Plot Wordsclouds for Donald Trump and Hillary Clinton
+```{r wordsclouds}
+par(mfrow=c(1,2))
+
+set.seed(1229064)
+#Trump Cloud
+trump.cloud <-wordcloud(rownames(d), d$freq, random.order=FALSE, colors=brewer.pal(50, "Dark2"), max.words = 90, min.freq = 8, cex.names = 0.7)
+
+set.seed(1219174)
+#Hillary Cloud
+hillary.cloud <- wordcloud(rownames(d2), d2$freq, random.order=FALSE, colors=brewer.pal(50, "Dark2"), max.words = 90, min.freq = 7, cex.names = 0.7)
+
+#Some words are similar. Could be due to rows containing info about both hillary and trump
+```
+
+## Extra Obama WordCloud
+```{r obama}
+corpus3=Corpus(VectorSource(obama.data$text))
+
+stopwordsO <- stopwords
+stopwordsO <- rbind(stopwordsO, data.frame("Stop.Words"="trump"))
+stopwordsO <- rbind(stopwordsO, data.frame("Stop.Words"="hillary"))
+stopwordsO <- rbind(stopwordsO, data.frame("Stop.Words"="obamas"))
+stopwordsO <- rbind(stopwordsO, data.frame("Stop.Words"="barackobama"))
+stopwordsO <- rbind(stopwordsO, data.frame("Stop.Words"="potus"))
+stopwordsO <- rbind(stopwordsO, data.frame("Stop.Words"="barack"))
+
+tdm3 = TermDocumentMatrix(corpus3,
+   control = list(removePunctuation = TRUE,
+   stopwords = stopwordsO,
+   removeNumbers = TRUE, tolower = TRUE))
+
+che3 = rollup(tdm3,2,na.rm=TRUE,FUN = sum)
+che3 = as.matrix(che3)
+
+dm3 = data.frame(che3)
+
+#Term Document Matrix with Stop Words Removed
+d3 <- subset(dm3, !(rownames(dm3) %in% stopwordsO$Stop.Words))
+colnames(d3) <- c("freq")
+
+par(mfrow = c(1,1))
+
+# Plot wordcloud
+obama.cloud <- wordcloud(rownames(d3), d3$freq, random.order=FALSE, colors=brewer.pal(50, "Dark2"), max.words = 90, min.freq = 8)
+```
+
+Sentiment Ratings of Commonly Used Words
+```{r sentiment}
+# Syuzhet package to analyze sentiment
+# NRC Emotion Lexicon Sentiment
+d$words <- row.names(d)
+sentiment_trump <- get_nrc_sentiment(d$words)
+sent_trum <- colSums(sentiment_trump)
+sent_trum <- as.data.frame(sent_trum)
+sent_trum$ID <- c(1:10)
+
+d2$words <- row.names(d2)
+sentiment_hillary <- get_nrc_sentiment(d2$words)
+sent_hill <- colSums(sentiment_hillary)
+sent_hill <- as.data.frame(sent_hill)
+sent_hill$ID <- c(1:10)
+
+#par(mfrow = c(1,2),las = 2)
+
+#barplot(sent_trum$sent_trum, names.arg=row.names(sent_trum), col= "red", main="Sentiment Rating - Trump", xlab = "Sentiment Terms", ylab = "Sentiment Frequency", cex.names = 0.7)
+
+#barplot(sent_hill$sent_hill, names.arg=row.names(sent_hill), col= "blue", main="Sentiment Rating - Clinton", xlab = "Sentiment Terms", ylab = "Sentiment Frequency", cex.names = 0.7)
+
+#hpwStack = list(sent_trum$sent_trum, sent_hill$sent_hill)
+#barplot(hpwStack)
+#multhist(hpwStack, col = c("red","blue"), main = 'Side-by-side Histograms of Hours Per Week', breaks = 9)
+```
+
+```{r barchart_Sentiment}
+keys = t(data.frame(sent_trum[,-2]))
+colnames(keys) = c("anger", "anticipation", "disgust", "fear", "joy", "sadness", "surprise", "trust", "negative", "positive")
+rownames(keys) = c("Trump")
+
+keyu = t(data.frame(sent_hill[,-2]))
+colnames(keyu) = c("anger", "anticipation", "disgust", "fear", "joy", "sadness", "surprise", "trust", "negative", "positive")
+rownames(keyu) = c("Hillary")
+
+key = rbind(keys, keyu)
+barplot(key, main = "Sentiment - Trump vs. Hillary", xlab = "Sentiments", col = c("red", "darkblue"), beside = TRUE, axes = F)
+legend("topleft", col = c("red", "darkblue"), lwd = 4, legend = c('Trump', 'Hillary'))
+```
+
+```{r TDt_Trump}
+library(tm) 
+library(class) 
+library(SnowballC)
+
+dft = NULL
+dft <- trumpSample_1000
+
+# Create corpus
+docst <- Corpus(VectorSource(dft$text))
+
+# Clean corpus
+docst <- tm_map(docst, content_transformer(tolower))
+docst <- tm_map(docst, removeNumbers)
+docst <- tm_map(docst, removeWords, stopwordsT$Stop.Words)
+docst <- tm_map(docst, removePunctuation)
+docst <- tm_map(docst, stripWhitespace)
+docst <- tm_map(docst, stemDocument, language = "english")
+docst <- tm_map(docst, removeWords, stopwords("english"))
+
+# Create dtm
+TDt <- DocumentTermMatrix(docst)
+TDt = as.matrix(TDt)
+
+TDt = data.frame(TDt)
+
+# Column bind class
+TDt$sentimentClass <- dft$class
+TDt = na.omit(TDt)
+
+# Column bind class
+TDt$sentimentClass <- dft$class
+
+# Split data by rownumber into two portions
+set.seed(2065299)
+sample.t2 = sample(nrow(TDt), ceiling(nrow(TDt) * .8))
+train2 <- TDt[sample.t2, ]
+test2 <- TDt[-sample.t2, ]
+```
+
+```{r KNN_Trump}
+set.seed(9802321)
+#knn.pred2 <- knn(train2[,-2161], test2[,-2161], k=3, cl = train2[,2161])
+#fold.index.in = as.numeric(unlist(fold.strat[1]))
+test_data.in = test2[, -2161]
+test_class.in = test2[, 2161]
+train_data.in = train2[, -2161]
+train_class.in = train2[, 2161]
+      
+knn.pred2  = knn(train=train_data.in, test=test_data.in, cl=train_class.in, k = 5)
+
+conf.mat2 <- table("Predictions" = knn.pred2, Actual = test_class.in)
+conf.mat2
+accuracy2 = sum(knn.pred2 == test_class.in) / length(test_class.in)
+
+eval = table(knn.pred2, test_class.in)
+cm = confusionMatrix(eval)
+pram.eval = as.data.frame(cm$byClass)
+names(pram.eval) = c("evals")
+pram.eval["Accuracy",] = cm$overall[1]
+knn.eval.t = pram.eval
+pram.eval
+```
+
+```{r 10Fold_Trump}
+set.seed(1220634)
+n.folds = 5
+
+fold.strat = createFolds(TDt$sentimentClass, k=n.folds) #k-folds with stratification. caret package.
+```
+
+```{r nested_5Fold_CV_KNN_Trump}
+set.seed(986021)
+KNN.test.error = rep(NA, n.folds)
+KNN.test.accu = rep(NA, n.folds)
+KNN.test.auc = rep(NA, n.folds)
+knn.test.bestK = rep(NA, n.folds)
+
+KNN.test.accu.in = rep(NA, n.folds-1)
+k.values = c(1,3,5,7,9)
+
+for(i in 1:n.folds)
+{
+  fold.index = as.numeric(unlist(fold.strat[i]))
+  test_data = TDt[fold.index, ][, -2161]
+  test_class = TDt[fold.index, ][, 2161]
+  new.data = TDt[-fold.index, ]
+  train_data = new.data[, -2161]
+  train_class = TDt[-fold.index, ][, 2161]
+
+  #internal CV on the: for selecting the best value of k
+  #creating the internal folds
+  fold.in = createFolds(new.data$sentimentClass, k = n.folds - 1)
+  acc.in = data.frame("kValue" = k.values, "accuracyMean" = NA)
+  w = 1
+  
+  for(kk in k.values)
+  {
+    for(jj in 1:(n.folds - 1))
+    {
+      fold.index.in = as.numeric(unlist(fold.in[jj]))
+      test_data.in = new.data[fold.index.in, ][, -2161]
+      test_class.in = new.data[fold.index.in, ][, 2161]
+      train_data.in = new.data[-fold.index.in, ][, -2161]
+      train_class.in = new.data[-fold.index.in, ][, 2161]
+      
+      test.fit.in  = knn(train=train_data.in, test=test_data.in, cl=train_class.in, k = kk)
+      KNN.test.accu.in[jj] = c(sum(test.fit.in == test_class.in) / nrow(test_data.in))
+    }
+    
+    acc.in$accuracyMean[w] = mean(KNN.test.accu.in)
+    w = w+1
+  }
+  
+  #now: picking the best k
+  k.meanAve = acc.in[order(-acc.in$accuracyMean), ] 
+  best.k = k.meanAve$kValue[1]
+  knn.test.bestK[i] = best.k
+  
+  test.fit  = knn(train=train_data, test=test_data, cl=train_class, k = best.k)
+  
+  KNN.test.error[i] = c(1 - sum(test.fit == test_class) / nrow(test_data))
+  KNN.test.accu[i] = c(sum(test.fit == test_class) / nrow(test_data))
+    
+  pred = prediction(as.numeric(test.fit), test_class)
+  auc.te = performance(pred, "auc")
+  KNN.test.auc[i] = c(as.numeric(auc.te@y.values))
+}
+
+detail.k_1 = data.frame(fold=1:n.folds, "error" = KNN.test.error, "accuracy" = KNN.test.accu, "auc" = KNN.test.auc, "best_K_used" = knn.test.bestK)
+```
+
+### Errors, Accuracy, & AUC - (Having used nested CV to pick best value for K)
+```{r CONTINUE_nested_5Fold_CV_KNN_Trump_1}
+kable(detail.k_1, row.names = F)
+```
+
+<br />
+
+```{r CONTINUE_nested_5Fold_CV_KNN_Trump_2}
+ave.detail.k = data.frame(mean_error = mean(detail.k_1$error), mean_accuracy = mean(detail.k_1$accuracy), mean_auc = mean(detail.k_1$auc))
+kable(ave.detail.k, row.names = F)
+```
+
+```{r SVM_Trump_Tune}
+svm.model = tune.svm(sentimentClass ~., data = train2, kernel='radial', cost = c(0.01, 0.1, 1, 10, 100), gamma = c(0.01, 0.1, 1, 10, 100))
+
+svm.model
+svm.test.fit = predict(svm.model$best.model, test2[,-2161])
+svm.test.cl = as.numeric(svm.test.fit)
+for(zz in 1:length(svm.test.cl))
+{
+  if(svm.test.cl[zz] >= 0.5)
+  {
+    svm.test.cl[zz] = 1
+  }
+  else
+  {
+    svm.test.cl[zz] = 0
+  }
+}
+
+conf.matrix = confusionMatrix(svm.test.cl, test2[,2161])
+cf.mat.tab = conf.matrix$table
+cf.mat.tab
+acc = conf.matrix$overall[1]
+error = 1 - acc
+  
+pred.2 = prediction(as.numeric(svm.test.cl), test2[,2161])
+auc.te = performance(pred.2, "auc")
+auc = as.numeric(auc.te@y.values)
+result = data.frame("Accuracy" = acc, "Error" = error, "AUC" = auc)
+kable(result, row.names = F)
+```
+
+```{r RandomForest_Trump}
+set.seed(12349801)
+rf.model2 = randomForest(train2[,-2161], as.factor(as.numeric(train2[,2161])))
+rf.model2
+pred2 = predict(rf.model2, test2[, -2161])
+
+conf.matrix2 = confusionMatrix(pred2, as.factor(as.numeric(test2[, 2161])))
+cf.mat.tab2 = conf.matrix2$table
+cf.mat.tab2
+acc2 = conf.matrix2$overall[1]
+error2 = 1 - acc2
+
+pred.2 = prediction(as.numeric(pred2), test2[,2161])
+auc.te = performance(pred.2, "auc")
+auc = as.numeric(auc.te@y.values)
+result = data.frame("Accuracy" = acc2, "Error" = error2, "AUC" = auc)
+kable(result, row.names = F)
+```
+
+########################## Begin Hillary Algorithm
+
+```{r TDt_Hillary}
+dft = NULL
+dft <- clintonSample_1000
+
+# Create corpus
+docst <- Corpus(VectorSource(dft$text))
+
+# Clean corpus
+docst <- tm_map(docst, content_transformer(tolower))
+docst <- tm_map(docst, removeNumbers)
+docst <- tm_map(docst, removeWords, stopwordsH$Stop.Words)
+docst <- tm_map(docst, removePunctuation)
+docst <- tm_map(docst, stripWhitespace)
+docst <- tm_map(docst, stemDocument, language = "english")
+docst <- tm_map(docst, removeWords, stopwords("english"))
+
+# Create dtm
+TDt <- DocumentTermMatrix(docst)
+TDt = as.matrix(TDt)
+
+TDt = data.frame(TDt)
+
+# Column bind class
+TDt$sentimentClass <- dft$class
+TDt = na.omit(TDt)
+
+# Split data by rownumber into two portions
+set.seed(218799)
+sample.t2 = sample(nrow(TDt), ceiling(nrow(TDt) * .8))
+train2 <- TDt[sample.t2, ]
+test2 <- TDt[-sample.t2, ]
+```
+
+```{r KNN_Hillary}
+set.seed(1012321)
+#knn.pred2 <- knn(train2[,-2169], test2[,-2169], k=3, cl = train2[,2169])
+#fold.index.in = as.numeric(unlist(fold.strat[1]))
+test_data.in = test2[, -2169]
+test_class.in = test2[, 2169]
+train_data.in = train2[, -2169]
+train_class.in = train2[, 2169]
+      
+knn.pred2  = knn(train=train_data.in, test=test_data.in, cl=train_class.in, k = 5)
+
+conf.mat2 <- table("Predictions" = knn.pred2, Actual = test_class.in)
+conf.mat2
+accuracy2 = sum(knn.pred2 == test_class.in) / length(test_class.in)
+
+eval = table(knn.pred2, test_class.in)
+cm = confusionMatrix(eval)
+pram.eval = as.data.frame(cm$byClass)
+names(pram.eval) = c("evals")
+pram.eval["Accuracy",] = cm$overall[1]
+knn.eval.t = pram.eval
+pram.eval
+```
+
+```{r 10Fold_Hillary}
+set.seed(120634)
+n.folds = 5
+
+fold.strat = createFolds(TDt$sentimentClass, k=n.folds) #k-folds with stratification. caret package.
+```
+
+```{r nested_5Fold_CV_KNN_Hillary}
+set.seed(980021)
+KNN.test.error = rep(NA, n.folds)
+KNN.test.accu = rep(NA, n.folds)
+KNN.test.auc = rep(NA, n.folds)
+knn.test.bestK = rep(NA, n.folds)
+
+KNN.test.accu.in = rep(NA, n.folds-1)
+k.values = c(1,3,5,7,9)
+
+for(i in 1:n.folds)
+{
+  fold.index = as.numeric(unlist(fold.strat[i]))
+  test_data = TDt[fold.index, ][, -2169]
+  test_class = TDt[fold.index, ][, 2169]
+  new.data = TDt[-fold.index, ]
+  train_data = new.data[, -2169]
+  train_class = TDt[-fold.index, ][, 2169]
+
+  #internal CV on the: for selecting the best value of k
+  #creating the internal folds
+  fold.in = createFolds(new.data$sentimentClass, k = n.folds - 1)
+  acc.in = data.frame("kValue" = k.values, "accuracyMean" = NA)
+  w = 1
+  
+  for(kk in k.values)
+  {
+    for(jj in 1:(n.folds - 1))
+    {
+      fold.index.in = as.numeric(unlist(fold.in[jj]))
+      test_data.in = new.data[fold.index.in, ][, -2169]
+      test_class.in = new.data[fold.index.in, ][, 2169]
+      train_data.in = new.data[-fold.index.in, ][, -2169]
+      train_class.in = new.data[-fold.index.in, ][, 2169]
+      
+      test.fit.in  = knn(train=train_data.in, test=test_data.in, cl=train_class.in, k = kk)
+      KNN.test.accu.in[jj] = c(sum(test.fit.in == test_class.in) / nrow(test_data.in))
+    }
+    
+    acc.in$accuracyMean[w] = mean(KNN.test.accu.in)
+    w = w+1
+  }
+  
+  #now: picking the best k
+  k.meanAve = acc.in[order(-acc.in$accuracyMean), ] 
+  best.k = k.meanAve$kValue[1]
+  knn.test.bestK[i] = best.k
+  
+  test.fit  = knn(train=train_data, test=test_data, cl=train_class, k = best.k)
+  
+  KNN.test.error[i] = c(1 - sum(test.fit == test_class) / nrow(test_data))
+  KNN.test.accu[i] = c(sum(test.fit == test_class) / nrow(test_data))
+    
+  pred = prediction(as.numeric(test.fit), test_class)
+  auc.te = performance(pred, "auc")
+  KNN.test.auc[i] = c(as.numeric(auc.te@y.values))
+}
+
+detail.k_1 = data.frame(fold=1:n.folds, "error" = KNN.test.error, "accuracy" = KNN.test.accu, "auc" = KNN.test.auc, "best_K_used" = knn.test.bestK)
+```
+
+### Errors, Accuracy, & AUC - (Having used nested CV to pick best value for K)
+```{r CONTINUE_nested_5Fold_CV_KNN_Hillary_1}
+kable(detail.k_1, row.names = F)
+```
+
+<br />
+
+```{r CONTINUE_nested_5Fold_CV_KNN_Hillary_2}
+ave.detail.k = data.frame(mean_error = mean(detail.k_1$error), mean_accuracy = mean(detail.k_1$accuracy), mean_auc = mean(detail.k_1$auc))
+kable(ave.detail.k, row.names = F)
+```
+
+```{r SVM_Hillary_Tune}
+svm.model = tune.svm(sentimentClass ~., data = train2, kernel='radial', cost = c(0.01, 0.1, 1, 10, 100), gamma = c(0.01, 0.1, 1, 10, 100))
+
+svm.model
+svm.test.fit = predict(svm.model$best.model, test2[,-2169])
+svm.test.cl = as.numeric(svm.test.fit)
+for(zz in 1:length(svm.test.cl))
+{
+  if(svm.test.cl[zz] >= 0.5)
+  {
+    svm.test.cl[zz] = 1
+  }
+  else
+  {
+    svm.test.cl[zz] = 0
+  }
+}
+
+conf.matrix = confusionMatrix(svm.test.cl, test2[,2169])
+cf.mat.tab = conf.matrix$table
+cf.mat.tab
+acc = conf.matrix$overall[1]
+error = 1 - acc
+  
+pred.2 = prediction(as.numeric(svm.test.cl), test2[,2169])
+auc.te = performance(pred.2, "auc")
+auc = as.numeric(auc.te@y.values)
+result = data.frame("Accuracy" = acc, "Error" = error, "AUC" = auc)
+kable(result, row.names = F)
+```
+
+```{r RandomForest_Hillary}
+set.seed(1234001)
+rf.model2 = randomForest(train2[,-2169], as.factor(as.numeric(train2[,2169])))
+rf.model2
+pred2 = predict(rf.model2, test2[, -2169])
+
+conf.matrix2 = confusionMatrix(pred2, as.factor(as.numeric(test2[, 2169])))
+cf.mat.tab2 = conf.matrix2$table
+cf.mat.tab2
+acc2 = conf.matrix2$overall[1]
+error2 = 1 - acc2
+
+pred.2 = prediction(as.numeric(pred2), test2[,2169])
+auc.te = performance(pred.2, "auc")
+auc = as.numeric(auc.te@y.values)
+result = data.frame("Accuracy" = acc2, "Error" = error2, "AUC" = auc)
+kable(result, row.names = F)
+```

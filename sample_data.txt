@@ -1,0 +1,24 @@
+"1100" "Always https://t.co/AevqjWdtkN" "West Valley City" "UT" 1
+"2" "@tum_tum22 atleast America will be great again for those who aren't a woman, black, Latino or LBGTQ" "Ohio" "USA" 2
+"3" "Everyone I follow is somehow a political philosopher right now" "Utica" "NY" 3
+"4" "My pure romance party is Saturday the 19th at my house so if any of you ladies want to come dm and I'll give the details<ed><U+00A0><U+00BC><ed><U+00BC><U+00B9><ed><U+00A0><U+00BC><ed><U+00BD><U+00B7>" "Murray" "UT" 4
+"5" "Can we please have Obama back for 4 more years of Hillary doesn't win! At least he has experience. #Elections2016" "Austintown" "OH" 5
+"6" "Well at least I can be proud of my state. We did our part. I'm sorry everyone else had to fuck it up. https://t.co/KPV0AbDgrV" "North Las Vegas" "NV" 6
+"7" "LMFAO https://t.co/IdnXMlY2CU" "New Orleans" "LA" 7
+"8" "There are definitively two of \"The United States.\" #ElectionNight" "West Hollywood" "CA" 8
+"9" "#Repost @ladygaga with repostapp
+···
+Lovin it up with the ladies.!!! GO HILLARY #vote if your… https://t.co/MfkpUjOLEH" "Atlanta" "GA" 9
+"10" "@denzel_gotgame https://t.co/iPoI1ckRGB" "Auburn" "AL" 10
+"11" "There's never been a better diss to a president then Eminems \"square dance\" for Bush lol im sorry YG" "Riverside" "CA" 11
+"12" "@LibertarianBlue huh. interesting. the media didn't tell me that thought. every single fucking thing he ever said told me, so" "Alabama" "USA" 12
+"13" "I'm going to need someone to explain to me and my 77 sorority sisters how American voters guided a misogynist into presidency." "Maryville" "MO" 13
+"14" "update: my drunk gay friends called again, they want donuts because they think that Trump is going to exile them from America" "Costa Mesa" "CA" 14
+"15" "@lpearson puking &amp; numbness...what stage am I in now?" "Westfield" "NJ" 15
+"16" "@SukhiKaur3 @_Snape_ lmfao <ed><U+00A0><U+00BD><ed><U+00B8><U+0082><ed><U+00A0><U+00BD><ed><U+00B8><U+0082><ed><U+00A0><U+00BD><ed><U+00B2><U+00AF> literally what I see him as" "Philadelphia" "PA" 16
+"17" "Dude Uhauls business is about to sky rocket." "Eugene" "OR" 17
+
+
+
+Note: The actual dataset was over 1GB.
+
